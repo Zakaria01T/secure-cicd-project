@@ -62,6 +62,10 @@ jobs:
           name: bandit-security-report
           path: bandit-report.json
           
+      - name: Run Bandit SAST Scan (Enforce High Severity)
+        run: |
+          bandit -r . --severity-level high
+          
    # 🔑 JOB 3 - SECRET SCANNING
   secret-scan:
     name: Secret Scanning - Trufflehog
