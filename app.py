@@ -1,6 +1,6 @@
 from flask import Flask
-import subprocess
 import hashlib
+import os
 
 app = Flask(__name__)
 
@@ -12,16 +12,14 @@ def home():
 def health():
     return {"status": "healthy"}
 
-# ⚠️ INTENTIONAL VULNERABILITY 1 — Hardcoded secret
-SECRET_KEY = "hardcoded-secret-123"
+# ✅ FIX 1 — Use environment variable instead of hardcoded secret
+SECRET_KEY = os.environ.get("SECRET_KEY", "default-dev-key")
 
-# ⚠️ INTENTIONAL VULNERABILITY 2 — Fake AWS credentials
-AWS_ACCESS_KEY = "AKIAIOSFODNN7EXAMPLE"
-AWS_SECRET = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-
-# ⚠️ INTENTIONAL VULNERABILITY 3 — Weak hash
+# ✅ FIX 2 — Use strong hash instead of MD5
 def hash_password(password):
-    return hashlib.md5(password.encode()).hexdigest()
+    return hashlib.sha256(password.encode()).hexdigest()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # ✅ FIX 3 — Debug mode from environment variable
+    debug_mode = os.environ.get("DEBUG", "False") == "True"
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
