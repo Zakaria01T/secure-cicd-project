@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: read
-  issues: write       
+  issues: write
   security-events: write
 
 jobs:
@@ -16,13 +16,12 @@ jobs:
   build-and-test:
     name: Build & Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
@@ -38,29 +37,28 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t secure-cicd-project:latest .
-  
+
   # JOB 2 - SAST SCAN
   sast-scan:
     name: Static Application Security Testing (bandit security scan)
     runs-on: ubuntu-latest
     needs: build-and-test
     steps:
-      - name: checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      
-      - name: Install bandit
-        run: | 
-          pip install bandit
-      
-      - name: Run bandit security scan
-        run: | 
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit SAST Scan (Generate Report)
+        run: |
           bandit -r . -f json -o bandit-report.json || true
-      
+
       - name: Upload Bandit Report
         uses: actions/upload-artifact@v4
         with:
@@ -70,8 +68,8 @@ jobs:
       - name: Run Bandit SAST Scan (Enforce High Severity)
         run: |
           bandit -r . --severity-level high
-          
-   # JOB 3 - SECRET SCANNING
+
+  # JOB 3 - SECRET SCANNING
   secret-scan:
     name: Secret Scanning - Trufflehog
     runs-on: ubuntu-latest
@@ -80,7 +78,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0          
+          fetch-depth: 0
 
       - name: Run Trufflehog Secret Scan
         uses: trufflesecurity/trufflehog@main
@@ -89,7 +87,7 @@ jobs:
           base: HEAD~1
           head: HEAD
           extra_args: --only-verified
-  
+
   # JOB 4 - SCA SCAN
   sca-scan:
     name: SCA - Dependency Vulnerability Scan
@@ -117,7 +115,7 @@ jobs:
         with:
           name: safety-dependency-report
           path: safety-report.json
-  
+
   # JOB 5 - DAST
   dast-scan:
     name: DAST - OWASP ZAP Security Scan
@@ -133,8 +131,7 @@ jobs:
           python-version: '3.9'
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Start Flask App
         run: |
@@ -145,7 +142,7 @@ jobs:
       - name: Run OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
         with:
-          target: 'http://host.docker.internal:5000'
+          target: 'http://localhost:5000'
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-I'
           allow_issue_writing: false
